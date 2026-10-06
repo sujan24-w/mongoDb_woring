@@ -1,8 +1,25 @@
 const productModel= require("../models/product");
-const {productValidateSchema,productUpdateSchema}= require("../zodValidate/productValidate")
+const {productValidateSchema,
+  productUpdateSchema,
+paginationZodSchema}= require("../zodValidate/productValidate")
 const allProducts= async (req, res)=>{
+   
+
+  const result= paginationZodSchema.safeParse(req.query);
+      if(!result.success){
+         return res.status(400).json({
+          success: false,
+          errors: result.error.issues
+        });
+        }
+  
+  const {page, limit}= result.data;
+  console.log(`page==${page}  `);
+    console.log(`limit==${limit}  `);
+   
     try{
-        const product= await productModel.find();
+       const skip =  (page-1) *limit 
+        const product= await productModel.find().skip(skip).limit(limit);
          if(!product){
           res.status(404).json({message:"no product availables"})
 
@@ -131,10 +148,17 @@ return res.status(200).json({
     
  }
 
+
+ const productsCountTotal = async (req,res)=>{
+  const totalDocs= await productModel.countDocuments();
+  res.send({totalDocs,message:"total document  present", success: false})
+ }
+
 module.exports= {allProducts,
      getOneProduct,
      createProduct,
       updateProduct,
-   deleteProduct
+   deleteProduct,
+   productsCountTotal
 
 }
