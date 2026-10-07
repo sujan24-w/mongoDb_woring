@@ -2,9 +2,12 @@ const productModel= require("../models/product");
 const {productValidateSchema,
   productUpdateSchema,
 paginationZodSchema}= require("../zodValidate/productValidate")
+
+
+
 const allProducts= async (req, res)=>{
    
-
+  let filter={};
   const result= paginationZodSchema.safeParse(req.query);
       if(!result.success){
          return res.status(400).json({
@@ -16,12 +19,23 @@ const allProducts= async (req, res)=>{
   const {page, limit}= result.data;
   console.log(`page==${page}  `);
     console.log(`limit==${limit}  `);
-   
+
+    const category= result.data?.category;
+    const brand= result.data?.brand;
+    //minPrice, maxPrice,minRating, stock price sort 
+    
+    if(category){
+      console.log(category);
+      filter.category= category
+    }
+    console.log(filter);
+    
+  
     try{
        const skip =  (page-1) *limit 
-        const product= await productModel.find().skip(skip).limit(limit);
-         if(!product){
-          res.status(404).json({message:"no product availables"})
+        const product= await productModel.find(filter).skip(skip).limit(limit);
+         if(product.length<=0){
+          return  res.status(404).json({message:"no product availables"})
 
 
          }

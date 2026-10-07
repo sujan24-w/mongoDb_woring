@@ -1,0 +1,111 @@
+$inc   increase  /decrease  value   ie +  -
+$rename :fields rename (already)
+$unset -remove  field 
+$setOnInsert -set value only on insert  use ()
+
+
+//inc totalSpent by 2k  for costomer whose d  state is "...."
+
+
+db.costomers.updateMany({"address.state":"North Caroline"},{
+ $inc:{
+    totalSpent: 200
+  }
+}
+ )
+//rename  contact_No to phone 
+ db.costomers.updateMany({},{
+  $rename:{Contact_Number:"phone"}
+})
+
+
+//  remove  features tags from a product that has Fashion 
+db.products.updateMany({category:"Fashion"},{
+  $pull:{
+    tags:"Features"
+  }
+})
+
+//remove verified field  for all viewers 
+db.reviews.updateMany({},{
+  $unset:{
+    verified: ""
+  }
+})
+
+// add verified  as true  for all  reviews documents
+db.reviews.updateMany({},{
+  $set:{
+    verified:true
+  }
+})
+
+
+//update loggedin to  current date for costomer  with  email address  sujan@123gmail.com
+ if  no costomer exist with that email create  costomer name email phone and order   with create Date 
+
+db.costomers.updateOne({email:"sujan@123gmail.com"},
+{
+   $set:{
+     loggedIn: new Date()
+   },
+  $setOnInsert:{
+  email:"sujan@123gmail.com",
+  phone:"876543290",
+  order: 4,
+  createAt: new Date()
+  }
+},{upsert:true})
+
+
+
+ Note:  ({filter},{$set what to insert iff found ,$setOnInsert insert if not found},{upsert})    //updateandinsert  upsert true  
+ //   when  run   set  value and insert  value  both create like **  createAt  and loggedIn   both are create     **
+{
+  acknowledged: true,
+  insertedId: ObjectId('6ac6416d36adac274d8c857d'),
+  matchedCount: 0,
+  modifiedCount: 0,
+  upsertedCount: 1
+}
+db.costomers.find({email:"sujan@123gmail.com"})
+ {
+  _id: ObjectId('6ac6416d36adac274d8c857d'),
+  email: 'sujan@123gmail.com',
+  createAt: ISODate('2026-10-07T12:56:13.415Z'),
+  loggedIn: ISODate('2026-10-07T12:56:13.415Z'),
+  order: 4,
+  phone: '876543290'
+ }
+
+
+
+
+============================================
+// multiple updates on product 
+for all products ::
+  increase stock by 5 
+  add   sale tag  with no duplicate
+  add oldprice field 
+
+  db.products.updateMany({},{
+  $inc:{stock: 5},
+  $addToSet:{tags:"tags"},
+  $set:{oldPrice: ""}
+})
+
+
+
+//update  all where paymentMethod is UPI 
+
+inc  totalAmount  by 5k 
+ add fiels  upDate at eith current date
+ rename   field status  to orderedStatus
+
+ db.orders.updateMany({
+    paymentMethod:"UPI"       //  paymentMethod:{$in: "UPI"}
+},{
+   $inc:{totalCost:10},
+  $set:{updateAt:new Date()},
+  $rename:{status: "orderStatus"}
+})
