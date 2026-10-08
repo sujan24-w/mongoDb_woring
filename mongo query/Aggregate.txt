@@ -1,0 +1,389 @@
+Aggragation  in  MongoDB is a way  to Process data and Treansform it  into a meaningful  results - instead of just fetching a raw documents
+
+Aggragation = Data flow from step by step (Pipeline) -  each stage transform a data 
+
+
+=================================================
+aggregate([])  array of stages  stages is {} object
+===================================================
+some stages names are 
+$match  =   filter
+$project=     select/reshape fields  
+$group  = group via  _id (group+calculat) or id=null
+$sort   =  sort  result -1 or 1 
+$limit  =   limit result 
+$skip   =   skip result 
+$unwind =  convert array items into  documents 
+$lookup =  join another collection  similer sql join 
+$count  =  ount document 
+$addFields= add/calculate fields  
+
+
+// from CostomerLarge dataset 
+
+
+1. find the   totalOrders of  female costomers 
+db.costomerLarge.aggregate([
+  {
+  $match:{
+  gender:{$regex:/^f/i}
+  }
+  },{
+  $group:{
+    _id: null,
+    totalOrders:{$sum: "$totalOrders"}
+  }
+  }
+])
+==========================================
+//female costomers total order  acc to age froup
+
+db.costomerLarge.aggregate([
+  {
+  $match:{
+  gender:{$regex:/^f/i}
+  }
+  },{
+  $group:{
+    _id: "$age",
+    totalOrders:{$sum: "$totalOrders"}
+  }
+  },{
+    $sort:{age:-1}
+  }
+])
+
+
+//    match  female - group  by age in _id  , project reshape  field  id _to  age   and  short ascending order  
+
+db.costomerLarge.aggregate([
+  {
+  $match:{
+  gender:{$regex:/^f/i}
+  }
+  },{
+  $group:{
+    _id: "$age",
+    totalOrders:{$sum: "$totalOrders"}
+  }
+  },{
+    $sort:{age:-1}
+  }
+])
+
+
+
+Find all customers whose gender is "Male".
+
+db.costomerLarge.aggregate([
+  {
+    $match:{
+      gender:"Male"
+    }
+  }
+])
+
+
+
+Find all customers whose age is greater than or equal to 30.
+
+db.costomerLarge.aggregate([
+  {
+     $match:{
+       age:{$gte:30}
+     }
+  }
+])
+
+Calculate the total number of orders from all customers
+db.costomerLarge.aggregate([
+  {
+  $group:{
+    _id: null,
+      totalOrders:{
+      $sum:"$totalOrders"}
+  }
+  }
+])
+
+
+Calculate the total orders for each gender.
+db.costomerLarge.aggregate([
+  {
+    $group:{
+      _id:"$gender",
+      totalOrders:{
+        $sum: "$totalOrders"
+      }
+    }
+  },{
+    $project:{
+      _id:0,
+      gender: "$_id",
+      totalOrders: 1
+    }
+  }
+])
+ans:;
+{
+  totalOrders: 84211,
+  gender: 'Female'
+}
+{
+  totalOrders: 80833,
+  gender: 'Other'
+}
+{
+  totalOrders: 86156,
+  gender: 'Male'
+}
+
+
+
+
+Calculate the total amount spent by each gender.
+ {
+    $group:{
+      _id:"$gender",
+      totalSpent:{
+        $sum: "$totalSpent"} 
+    } 
+},
+  {
+    $project:{
+      _id:0,
+      gender: "$_id",
+      totalSpent: 1,
+      
+    }
+},
+  {
+    $sort: {
+      totalSpent:1
+    }
+}
+
+Find the average amount spent by each gender.
+db.costomerLarge.aggregate([
+  {
+    $group:{
+      _id:"$gender",
+      totalSpent:{
+        $avg: "$totalSpent"
+      }
+    }
+  },
+  {
+    $project:{
+      _id: 0,
+      gender:"$_id",
+      totalSpent: 1
+    }
+  }
+])
+
+
+For Female customers only, calculate the total amount spent for each age.
+db.costomerLarge.aggregate([
+  {
+    $match:{
+      gender: "Female"
+    }
+  },
+  {
+    $group:{
+      _id: "$age",
+      totalSpent:{
+        $sum: "$totalSpent"
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      age:"$_id",
+      totalSpent:1
+    }
+  },
+  {
+    $sort:{
+      age: 1
+    }
+  }
+])
+
+Find the top 5 customers who have spent the most money.
+db.costomerLarge.aggregate([
+  
+  {
+    $project:{
+      _id:0,
+      name:1,
+      totalSpent:1
+    }
+  },
+  {
+    $sort:{
+    totalSpent:-1
+    }
+  },
+  {
+    $limit: 5
+  }
+])
+
+
+Find the top 5 active customers who have placed the most orders.
+
+db.costomerLarge.aggregate([
+  {
+    $match:{
+      isActive:true
+      
+    }
+  },
+  
+  {
+    $project:{
+      _id:0,
+      name:1,
+      email:1,
+      totalOrders:1
+    }
+  },
+  {
+    $sort:{
+    totalOrders:-1
+    }
+  },
+  {
+    $limit: 5
+  }
+])
+
+
+Find the top 5 cities by total money spent, considering only active customers.
+db.costomerLarge.aggregate([
+  {
+    $group:{
+      _id:"$address.city",
+      totalSpent:{
+        $sum: "$totalSpent"
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      city:"$_id",
+      totalSpent:1
+    }
+  },
+  {
+    $sort:{
+      totalSpent: -1
+    }
+  },{
+    $limit:5
+  }
+])
+
+
+
+
+//   all orders of status shipped
+db.orders.aggregate([
+  {
+    $match:{
+      status:"shipped"
+    }
+  }
+])
+
+//  all costomer with total spent  more than 1lakhs  and only show email name and toalspent 
+db.costomerLarge.aggregate([
+  {
+    $match:{
+      totalSpent:{
+        $gte: 100000
+      }
+    }
+  },{
+    $project:{
+       _id:0,
+      name:1,
+      email:1,
+      totalSpent:1
+    }
+  }
+])
+
+
+
+
+// total revenue per status 
+db.orders.aggregate([
+  {
+    $group:{
+      _id:"$status",
+      totalRevenue:{
+        $sum:"$totalAmount"
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      status:"$_id",
+      totalRevenue:1
+    }
+  }
+])
+
+
+//average product price  per category
+db.products.aggregate([
+  {
+    $group:{
+      _id:"$category",
+      AveragePricePerProduct:{
+        $avg:"$price"
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      category:"$_id",
+      AveragePricePerProduct:1
+    }
+  }
+])
+
+
+// total spending of each costemers who use  payment method upi and  dislay only  costomerID  and   totalSpent 
+
+db.orders.aggregate([
+  {
+    $match:{
+      paymentMethod:"UPI"
+    }
+  },
+  {
+    $group:{
+      _id:"$customerId",
+        totalSpent:{
+          $sum: "$totalAmount"
+      
+        }
+    }
+  },
+  {
+     $project:{
+       _id:0,
+       costomerId:"$_id",
+       totalSpent:1,
+       
+     }
+  }
+])

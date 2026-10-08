@@ -1,0 +1,69 @@
+MongoDB Indexing
+
+index  is a  data structure  mongodb  creates to find  document   faster without  scanning the entire collection
+
+// creating index 
+
+indes  make  fater   but have a cost 
+such as 
+disk space
+memory/cache
+write performance 
+
+ so   index  when that  field id frequently required like email generally  
+
+
+along with speed  index   is createed also for 
+1..  performance   2. Uniqueness 
+
+
+db.users.createIndex({email:1},{unique:true})
+
+
+// first create index 
+db.costomers.createIndex({email:1})
+
+
+db.costomers.find({email:"gunnar.rice87@gmail.com"}).explain("executionStatus")   
+
+
+
+also createIndex({email:...})   like 1  and -1 
+1   ascending   order in index   A  B  C  D...Z
+-1 is for descending  order       Z  Y  X  W...A
+
+
+
+
+==================================
+compound  index 
+===================================
+
+db.costomers.createIndex({
+    email:1,
+    Age:1
+})
+use  case    is to  find  and read   alonf with sort is fater if used index   optimally 
+
+Create indexes based on actual query patterns, not simply because a field exists. like  from beginnid deside  it is ok and  best     indeinf  depending on the use cases or  filter condition
+
+Look at the queries that  backend frequently performs, then design indexes around those query patterns.
+
+
+// see  all indexes that er create indexes 
+db.costomers.getIndexes()
+[
+  { v: 2, key: { _id: 1 }, name: '_id_' },
+  { v: 2, key: { email: 1 }, name: 'email_1' }
+]
+============
+drop index ? 
+============
+
+db.collection.dropIndex("nameofIndex")
+db.collection.dropIndex()  this   without name   empty () deleate  all usercreated  index 
+so _id is not deleated as it is default 
+
+deb.costomers.dropIndex("email_1")
+
+{ nIndexesWas: 2, ok: 1 }

@@ -1,0 +1,112 @@
+//regular expressions 
+$regex     in btn /..../
+mostly used  in pattern based  searching 
+ pattern based matching is a searching  data based on patterns instead  of exact values 
+
+ $regex is  used for pattern matching in queries 
+ $options  is used to modify  behaviour
+
+ ^  = start  with   ^S   "Sujan", "sujal"
+ $ ends with  i$   "Panthi"
+ .*     anything in between   ^S.*n$ = Sujan  
+ 
+ find    costomer  whone name start  with "S"
+((((((((((((((   regex is case sensetive  but id use /i    like  /s/i   give   Sujan Sujan         ))))))))))))))
+
+
+db.users.find({
+    name:{$regex:/^S/i}
+})
+
+
+//  my all rejex  query   
+  email that start with e 
+db.costomers.find({
+  email:{
+    $regex: /^e.*\.com$/
+  }
+})
+
+// email that has  yahoo.com 
+db.costomers.find({
+  email:{
+    $regex: /yahoo.com$/
+  }
+},{email:1})
+
+// name  with Mr.    found 3 
+db.costomers.find({
+  name: /^Mr./i
+},{name:1})
+
+====   /man/i ================
+any sub string  that  has  word  
+like    wildman , manVswild human, superMan
+
+
+db.costomers.find({
+  name:{
+    $regex:/man/i
+  }
+})
+
+// prodct  with category fashion
+db.products.find({
+  category: /Fashion/i
+  
+})
+
+or 
+db.products.find({
+  category:{
+    $regex: /^fashion/,     //   or  just  /fashion/i   without $options
+    $options: "i" 
+  }
+  
+})
+
+
+
+ name start with  s and end with i   "sujan Panthi"
+db.products.find({
+  name:{
+    $regex: /^s.*i$/i   
+  }
+  
+})
+//
+db.products.find({
+  name:{
+    $regex: /^s.*i$/i   
+  }
+  
+})
+
+
+====================================================================
+Phone/     digits     OTP 
+===========================================================
+db.products.find({
+  phone:{
+    $regex: /^\+977/       
+  }
+  
+})
+
+//find   phone number with only digits 
+
+db.products.find({
+  phone:{
+    $regex: /\d{10}$/  
+  }
+  
+})
+\d  mean  1  digit    so \d{no of digits length} or repetation  \d = 0-9   once
+
+
+phone: 621.248.1089  regex of this phone  no
+db.costomers.find({
+  phone:{
+    $regex: /^\d{3}\.\d{3}\.\d{4}$/
+  }
+})
