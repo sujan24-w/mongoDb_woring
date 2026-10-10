@@ -1,0 +1,198 @@
+$unwind =  convert array items into  documents 
+$lookup =  join another collection  similer sql join 
+$count  =  ount document 
+$addFields= add/calculate fields  
+
+
+
+
+//  unwind items of orderId ...
+db.orders.aggregate([
+  { 
+    $match:{
+      orderId:"ORD-WGYD0Y"
+      
+    }
+  
+},
+  {
+    $unwind: "$items"
+  }
+])
+
+=================================================
+fron below  document 
+
+{
+  customer: "Sujan",
+  services: [
+    { name: "Oil Change", price: 1000 },
+    { name: "Brake Repair", price: 2500 }
+  ]
+}
+@qsn How much money was spent on Brake Repair?
+
+db.collection.aggregate([
+    {
+        $unwind: "$services"
+    },
+    {
+        $match:{
+         "service.name": /^brake /
+        }
+    },
+    {
+       $group:{
+        _id: "$service.name",
+        totalCost:{$sum: "$services.price"}
+       }
+    },
+    {
+        $project:{
+            _id:0,
+            totalCost: 1,
+            Service:"$_id"
+        }
+    }
+])
+
+
+//find  total quantity  sold per product
+
+db.orders.aggregate([
+  {
+    $unwind: {
+      path: "$items",
+      preserveNullAndEmptyArrays:true
+    }
+  },
+  {
+    $group: {
+       _id:"$items.productName",
+      totalQuantity:{
+        $sum: "$items.quantity"
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      productName:"$_id",
+      totalQuantity:1
+    }
+  }
+])
+
+
+=====> path →     which array to unwind
+=====>>>preserveNullAndEmptyArrays → don't remove documents with empty/missing 
+
+arrays
+
+========>>>includeArrayIndex → add the element's original position as a new field.
+
+
+=========================================================
+//$facte  used to get multiple indights  multiple aggregation pipeline on the same input documents at same time and run result together 
+like do multiple seperate calculations  and one result 
+
+like  calculate most expensive if price >50000  and  lowproduct if price is less then 100
+db.products.aggregate([
+  {
+    $facet:{
+      expensiceProduct:[
+        {
+         $match:{
+           price:{$gt: 50000}
+         } 
+        }
+      ],
+      lowProduct:[
+        {
+         $match:{
+           price:{$lt:100}
+         } 
+        }
+      ]
+    }
+  }
+])
+
+//get total spending per costomers with their name 
+
+db.costomers.aggregate([
+  {
+    $group:{
+      _id:"$name",
+      totalSpent:{
+        $sum: "$totalSpent"
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      CostomerName:"$_id",
+      totalSpent:1
+    }
+  }
+])
+
+//
+
+db.orders.aggregate([
+  {
+    $group:{
+      _id:"$customerId",
+      totalSpent:{
+        $sum: "$totalAmount"
+      }
+    }
+  },
+  {
+  $lookup:{
+    from:"costomers",
+    localField:"_id",
+    foreignField:"_id",
+    as:"customer"
+  } 
+  },{
+    $unwind:{
+      path:"$customer",
+      includeArrayIndex: "string",
+     
+    }
+  },{
+  $project:{
+      _id:0,
+      CostomerName:"$customer.name",
+      totalSpent:1
+    }}
+])
+
+=========================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=========================================================================
+lookup = in mongodb we store data in collections so  often    related data    store in diff collection  so  it is a way  of joining  related document   from another collection
+==========================================================================

@@ -1,0 +1,196 @@
+$addFields == add new fields or modifies  field in each document 
+
+$count:   count no  of  documents and reyurn result
+
+$merge:     write aggrigation result into  a collections  
+ into   collection name 
+  on       collection fields   like _id   unique
+  whenMatched    merge 
+   whenNotMatched    discard or  inser 
+
+$cond:   applies conditional  logg   if else within aggregation expression 
+
+$==> firlds   
+$$   variables   ie inside aggregate id we create variable then using  it require  $$
+
+$map    input=field    as=variable    in = expression
+
+
+
+//addFields   
+if prces
+
+
+db.orders.aggregate([
+  {
+    $addFields:{
+      ordercategoty:{
+        $cond:{
+          if: {$gt:["$totalAmount",50000]},
+          then:"High",
+          else: "low"
+        }
+      }
+    }
+  }
+])
+this is  temporaary as a result  ie only in pipeline  
+if  want to  show in collection 
+use  $merge 
+
+
+db.orders.aggregate([
+  {
+    $addFields:{
+      orderCategory:{
+        $cond:{
+          if: {$gt:["$totalAmount",50000]},
+          then:"High",
+          else: "low"
+        }
+      }
+    }
+  },{
+    $merge:{
+      into:"orders",
+      on:"_id",
+      whenMatched:"merge",
+      whenNotMatched:"discard"
+    }
+  }
+])
+
+
+// find total no of  ordeers   with status shipped 
+
+db.orders.aggregate([
+  {
+    $match:{
+      orderStatus:"shipped"
+    }
+  },{
+     $count:"totalNoOfOrders"
+  }
+])
+
+
+// for   each order   calculate  total price of items (Quantity *  price)
+
+db.orders.aggregate([
+  {
+    $addFields:{
+      itemsTotal:{
+        $sum:{
+          
+        $map:{
+           input:"$items",
+          as:"item",
+          in: {
+             $multiply:["$$item.price","$$item.quantity"]
+            
+          }
+        }
+        }
+      }
+    }
+  },
+  {
+    $project:{
+      _id:0,
+      orderId:"orderId"
+      itemsTotal:1,
+      }
+      
+    }
+])
+
+
+add this in db collection via a below  merge  code $merge
+db.orders.aggregate([
+  {
+    $addFields:{
+      itemsTotalPrice:{
+        $sum:{
+          
+        $map:{
+           input:"$items",
+          as:"item",
+          in: {
+             $multiply:["$$item.price","$$item.quantity"]
+            
+          }
+        }
+        }
+      }
+    }
+  },
+  {
+    $merge:{
+      into:"orders",
+      on:"_id",
+      whenMatched:"merge",
+      whenNotMatched:"discard"
+      }
+    }
+])
+
+
+
+// find total spending per costomers and  category  them  as
+premium  id   spending 2lakhs
+regualr other 
+
+db.orders.aggregate([
+  {
+   $group:{
+     _id:"$customerId",
+     totalSpent:{
+       $sum: "$totalAmount"
+     }
+   } 
+  },{
+    $addFields:{
+      category:{
+    $cond:{
+      if: {$gt:["$totalSpent",200000]},
+      then: "Premium",
+      else:"Regular"
+      }
+    }
+    }
+  },{
+    $merge:{
+      into:"costomers",
+      on:"_id",
+      whenMatched:"merge",
+      whenNotMatched:"discard"
+    }
+  }
+  
+])
+
+create new collection with costomer id 
+totalspent and ordercount 
+db.orders.aggregate([
+  {
+    $group:{
+      _id:"$customerId",
+      totalSpent:{$sum: "$totalAmount"},
+      orderCount:{$sum: 1 }
+    }
+  },{
+    $project:{
+       _id:0,
+      costomerId:"$_id",
+      totalSpent:1,
+      orderCount:1
+    }
+  },{
+    $merge:{
+      into:"costomerAnalysis",
+      whenMatched:"merge",
+      whenNotMatched:"insert"  
+      
+    }
+  }
+])
