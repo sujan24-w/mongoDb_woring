@@ -20,8 +20,12 @@ const paginationZodSchema= z.object({
     limit: z.coerce.number().int().min(1).max(100).default(10),
     category: z.string().trim().optional() ,
     brand: z.string().optional() ,
+    tags: z.string().optional(),
+    ratings: z.enum(["high","low"]).optional(),
+    minPrice: z.coerce.number().min(0).optional(),
+    maxPrice: z.coerce.number().min(0).optional(),  
 })
-
+ 
 
 module.exports= {productValidateSchema,
     productUpdateSchema,
